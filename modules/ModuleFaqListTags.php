@@ -1,49 +1,20 @@
 <?php
 
-/**
- * Contao Open Source CMS
- * Copyright (C) 2005-2011 Leo Feyer
- *
- * Formerly known as TYPOlight Open Source CMS.
- *
- * This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation, either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program. If not, please visit the Free
- * Software Foundation website at <http://www.gnu.org/licenses/>.
- *
- * PHP version 5
- * @copyright  Helmut Schottmüller 2012
- * @author     Helmut Schottmüller <contao@aurealis.de>
- * @package    Faq
- * @license    LGPL
- * @filesource
- */
-
 namespace Contao;
 
-if (!defined('TL_ROOT')) die('You can not access this file directly!');
-
 /**
- * Class ModuleFaqListTags
+ * Contao Open Source CMS - tags extension
  *
- * @copyright  Helmut Schottmüller 2012
- * @author     Helmut Schottmüller <contao@aurealis.de>
- * @package    Controller
+ * Copyright (c) 2008-2016 Helmut Schottmüller
+ *
+ * @license LGPL-3.0+
  */
+
 class ModuleFaqListTags extends \ModuleFaqList
 {
 
 	/**
-	 * Generate module
+	 * Generate the module
 	 */
 	protected function compile()
 	{
@@ -84,6 +55,7 @@ class ModuleFaqListTags extends \ModuleFaqList
 		if ($objFaq === null)
 		{
 			$this->Template->faq = array();
+
 			return;
 		}
 
@@ -93,12 +65,15 @@ class ModuleFaqListTags extends \ModuleFaqList
 		while ($objFaq->next())
 		{
 			$arrTemp = $objFaq->row();
-
 			$arrTemp['title'] = specialchars($objFaq->question, true);
 			$arrTemp['href'] = $this->generateFaqLink($objFaq);
 
+			/** @var \FaqCategoryModel $objPid */
+			$objPid = $objFaq->getRelated('pid');
+
 			$arrFaq[$objFaq->pid]['items'][] = $arrTemp;
-			$arrFaq[$objFaq->pid]['headline'] = $objFaq->getRelated('pid')->headline;
+			$arrFaq[$objFaq->pid]['headline'] = $objPid->headline;
+			$arrFaq[$objFaq->pid]['title'] = $objPid->title;
 		}
 
 		$arrFaq = array_values(array_filter($arrFaq));
@@ -122,6 +97,6 @@ class ModuleFaqListTags extends \ModuleFaqList
 
 		$this->Template->faq = $arrFaq;
 	}
+
 }
 
-?>

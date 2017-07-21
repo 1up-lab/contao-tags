@@ -2,16 +2,14 @@
 
 namespace Contao;
 
-if (!defined('TL_ROOT')) die('You can not access this file directly!');
-
 /**
- * Class ModuleTagListByCategory
+ * Contao Open Source CMS - tags extension
  *
- * Front end module "tag list by category".
- * @copyright  Helmut Schottmüller 2011
- * @author     Helmut Schottmüller <contao@aurealis.de>
- * @package    Controller
+ * Copyright (c) 2008-2016 Helmut Schottmüller
+ *
+ * @license LGPL-3.0+
  */
+
 class ModuleTagListByCategory extends \Module
 {
 
@@ -68,7 +66,7 @@ class ModuleTagListByCategory extends \Module
 				{
 					if (count($tagids))
 					{
-						$found = $this->Database->prepare("SELECT tid, from_table FROM tl_tag WHERE from_table = IN (" . implode(',', $marks) . ") AND tag = ? AND tid IN (" . join($tagids, ",") . ")")
+						$found = $this->Database->prepare("SELECT tid, from_table FROM tl_tag WHERE from_table IN (" . implode(',', $marks) . ") AND tag = ? AND tid IN (" . join($tagids, ",") . ")")
 							->execute(array_merge($this->sourcetables, array($tag)))
 							->fetchAllAssoc();
 						foreach ($found as $data)
@@ -224,4 +222,3 @@ class ModuleTagListByCategory extends \Module
 	}
 }
 
-?>

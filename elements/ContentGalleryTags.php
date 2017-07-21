@@ -3,61 +3,26 @@
 namespace Contao;
 
 /**
- * Class ContentGalleryTags
+ * Contao Open Source CMS - tags extension
  *
- * Provide methods to handle tag input fields.
- * @copyright  Helmut Schottmüller 2013
- * @author     Helmut Schottmüller <https://github.com/hschottm/>
- * @package    Controller
+ * Copyright (c) 2008-2016 Helmut Schottmüller
+ *
+ * @license LGPL-3.0+
  */
+
 class ContentGalleryTags extends ContentGallery
 {
 	/**
-	 * Return if there are no files
-	 * @return string
+	 * Generate the content element
 	 */
-	public function generate()
+	public function compile()
 	{
-		// Use the home directory of the current user as file source
-		if ($this->useHomeDir && FE_USER_LOGGED_IN)
-		{
-			$this->import('FrontendUser', 'User');
-
-			if ($this->User->assignDir && $this->User->homeDir)
-			{
-				$this->multiSRC = array($this->User->homeDir);
-			}
-		}
-		else
-		{
-			$this->multiSRC = deserialize($this->multiSRC);
-		}
-
-		// Return if there are no files
-		if (!is_array($this->multiSRC) || empty($this->multiSRC))
-		{
-			return '';
-		}
-
 		$newMultiSRC = array();
-
-		// Get the file entries from the database
-		$this->objFiles = \FilesModel::findMultipleByUuids($this->multiSRC);
-
-		if ($this->objFiles === null)
-		{
-			if (!\Validator::isUuid($this->multiSRC[0]))
-			{
-				return '<p class="error">'.$GLOBALS['TL_LANG']['ERR']['version2format'].'</p>';
-			}
-
-			return '';
-		}
 
 		if ((strlen(\Input::get('tag')) && (!$this->tag_ignore)) || (strlen($this->tag_filter)))
 		{
 			$tagids = array();
-			
+
 			$relatedlist = (strlen(\Input::get('related'))) ? preg_split("/,/", \Input::get('related')) : array();
 			$alltags = array_merge(array(\Input::get('tag')), $relatedlist);
 			$first = true;
@@ -112,27 +77,32 @@ class ContentGalleryTags extends ContentGallery
 			}
 			$this->multiSRC = $newMultiSRC;
 			$this->objFiles = \FilesModel::findMultipleByUuids($this->multiSRC);
-		}
-
-		// Return if there are no files
-		if (!is_array($this->multiSRC) || empty($this->multiSRC))
-		{
-			return '';
-		}
-
-		if ($this->objFiles === null)
-		{
-			if (!\Validator::isUuid($this->multiSRC[0]))
+			if ($this->objFiles === null)
 			{
-				return '<p class="error">'.$GLOBALS['TL_LANG']['ERR']['version2format'].'</p>';
+				return '';
 			}
-
-			return '';
 		}
-
-		return parent::generate();
+		parent::compile();
 	}
-	
+
+  public static function addImageToTemplate($objTemplate, $arrItem, $intMaxWidth=null, $strLightboxId=null)
+  {
+      \Controller::addImageToTemplate($objTemplate, $arrItem, $intMaxWidth, $strLightboxId);
+      if (TL_MODE == 'FE')
+      {
+        $found = \TagModel::findByIdAndTable($arrItem['id'], 'tl_files');
+        $tags = array();
+        if ($found && $found->count())
+        {
+          while ($found->next())
+          {
+            array_push($tags, $found->tag);
+          }
+          $objTemplate->tags = $tags;
+        }
+      }
+  }
+
 	protected function getFilterTags()
 	{
 		if (strlen($this->tag_filter))
@@ -153,5 +123,5 @@ class ContentGalleryTags extends ContentGallery
 			return array();
 		}
 	}
-	
+
 }

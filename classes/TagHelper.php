@@ -1,51 +1,29 @@
 <?php
 
-/**
- * TYPOlight webCMS
- * Copyright (C) 2005 Leo Feyer
- *
- * This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation, either
- * version 2.1 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program. If not, please visit the Free
- * Software Foundation website at http://www.gnu.org/licenses/.
- *
- * PHP version 5
- * @copyright  Helmut Schottmüller 2008-2010
- * @author     Helmut Schottmüller <contao@aurealis.de>
- * @package    memberextensions
- * @license    LGPL
- * @filesource
- */
-
-/**
- * Class TagHelper
- *
- * Helper class for tags
- * @copyright  Helmut Schottmüller 2008-2010
- * @author     Helmut Schottmüller <contao@aurealis.de>
- * @package    Controller
- */
-
 namespace Contao;
+
+/**
+ * Contao Open Source CMS - tags extension
+ *
+ * Copyright (c) 2008-2016 Helmut Schottmüller
+ *
+ * @license LGPL-3.0+
+ */
 
 class TagHelper extends \Backend
 {
 	/**
 	 * Load the database object
 	 */
-	protected function __construct()
+	public function __construct()
 	{
 		parent::__construct();
 		$this->import('Database');
+	}
+
+	public function getAllEvents($arrEvents, $arrCalendars, $intStart, $intEnd, $caller)
+	{
+		return $arrEvents;
 	}
 
 	/*
@@ -133,10 +111,10 @@ class TagHelper extends \Backend
 	 * Read tags from database
 	 * @return string
 	 */
-	protected function getTags($id)
+	protected function getTags($id, $table)
 	{
 		return $this->Database->prepare("SELECT tag FROM tl_tag WHERE tid = ? AND from_table = ? ORDER BY tag ASC")
-			->execute($id, 'tl_news')
+			->execute($id, $table)
 			->fetchEach('tag');
 	}
 
@@ -157,10 +135,6 @@ class TagHelper extends \Backend
 		$res = false;
 		if (count($arrTags))
 		{
-			if ($max_tags > 0)
-			{
-				$arrTags = array_slice($arrTags,0,$max_tags);
-			}
 			$arrTagsWithCount = $this->Database->prepare("SELECT tag, COUNT(tag) as tagcount FROM tl_tag WHERE from_table = ? GROUP BY tag ORDER BY tag ASC")
 				->execute($table)
 				->fetchAllAssoc();
@@ -176,6 +150,10 @@ class TagHelper extends \Backend
 			if ($relevance == 1)
 			{
 				usort($arrTags, array($this, 'sortByRelevance'));
+			}
+			if ($max_tags > 0)
+			{
+				$arrTags = array_slice($arrTags,0,$max_tags);
 			}
 			if (strlen($target))
 			{
@@ -296,7 +274,7 @@ class TagHelper extends \Backend
 				global $objPage;
 				$pageArr = $objPage->row();
 			}
-			$tags = $this->getTags($row['id']);
+			$tags = $this->getTags($row['id'], 'tl_news');
 			$taglist = array();
 			foreach ($tags as $id => $tag)
 			{
@@ -312,6 +290,40 @@ class TagHelper extends \Backend
 			$objTemplate->tags = $tags;
 			$objTemplate->taglist = $taglist;
 		}
+	}
+	
+	public function getTagsAndTaglistForIdAndTable($id, $table, $jumpto)
+	{
+		$pageArr = array();
+		if (strlen($jumpto))
+		{
+			$objFoundPage = $this->Database->prepare("SELECT id, alias FROM tl_page WHERE id=?")
+				->limit(1)
+				->execute($jumpto);
+			$pageArr = ($objFoundPage->numRows) ? $objFoundPage->fetchAssoc() : array();
+		}
+		if (count($pageArr) == 0)
+		{
+			global $objPage;
+			$pageArr = $objPage->row();
+		}
+		$tags = $this->getTags($id, $table);
+		$taglist = array();
+		foreach ($tags as $id => $tag)
+		{
+			$strUrl = ampersand($this->generateFrontendUrl($pageArr, $items . '/tag/' . \System::urlencode($tag)));
+			if (strlen(\Environment::get('queryString'))) $strUrl .= "?" . \Environment::get('queryString');
+			$tags[$id] = '<a href="' . $strUrl . '">' . specialchars($tag) . '</a>';
+			$taglist[$id] = array(
+				'url' => $tags[$id],
+				'tag' => $tag,
+				'class' => TagList::_getTagNameClass($tag)
+			);
+		}
+		return array(
+			'tags' => $tags,
+			'taglist' => $taglist
+		);
 	}
 	
 	/**
@@ -359,4 +371,3 @@ class TagHelper extends \Backend
 	}
 }
 
-?>

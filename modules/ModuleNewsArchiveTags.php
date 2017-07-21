@@ -1,44 +1,15 @@
 <?php
 
-/**
- * TYPOlight webCMS
- * Copyright (C) 2005 Leo Feyer
- *
- * This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation, either
- * version 2.1 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program. If not, please visit the Free
- * Software Foundation website at http://www.gnu.org/licenses/.
- *
- * PHP version 5
- * @copyright  Helmut Schottmüller 2008
- * @author     Helmut Schottmüller <typolight@aurealis.de>
- * @package    tags
- * @license    LGPL
- * @filesource
- */
-
 namespace Contao;
 
-if (!defined('TL_ROOT')) die('You can not access this file directly!');
-
-
 /**
- * Class ModuleNewsArchiveTags
+ * Contao Open Source CMS - tags extension
  *
- * Front end module "news archive with tags support".
- * @copyright  Helmut Schottmüller 2008
- * @author     Helmut Schottmüller <typolight@aurealis.de>
- * @package    Controller
+ * Copyright (c) 2008-2016 Helmut Schottmüller
+ *
+ * @license LGPL-3.0+
  */
+
 class ModuleNewsArchiveTags extends \ModuleNewsArchive
 {
 	/**
@@ -71,6 +42,7 @@ class ModuleNewsArchiveTags extends \ModuleNewsArchive
 	 */
 	protected function compileFromParent($arrIds)
 	{
+		/** @var \PageModel $objPage */
 		global $objPage;
 
 		$limit = null;
@@ -78,58 +50,68 @@ class ModuleNewsArchiveTags extends \ModuleNewsArchive
 		$intBegin = 0;
 		$intEnd = 0;
 
+		$intYear = \Input::get('year');
+		$intMonth = \Input::get('month');
+		$intDay = \Input::get('day');
+
 		// Jump to the current period
 		if (!isset($_GET['year']) && !isset($_GET['month']) && !isset($_GET['day']) && $this->news_jumpToCurrent != 'all_items')
 		{
 			switch ($this->news_format)
 			{
 				case 'news_year':
-					\Input::setGet('year', date('Y'));
+					$intYear = date('Y');
 					break;
 
 				default:
 				case 'news_month':
-					\Input::setGet('month', date('Ym'));
+					$intMonth = date('Ym');
 					break;
 
 				case 'news_day':
-					\Input::setGet('day', date('Ymd'));
+					$intDay = date('Ymd');
 					break;
 			}
 		}
 
-		// Display year
-		if (\Input::get('year'))
+		// Create the date object
+		try
 		{
-			$strDate = \Input::get('year');
-			$objDate = new \Date($strDate, 'Y');
-			$intBegin = $objDate->yearBegin;
-			$intEnd = $objDate->yearEnd;
-			$this->headline .= ' ' . date('Y', $objDate->tstamp);
+			if ($intYear)
+			{
+				$strDate = $intYear;
+				$objDate = new \Date($strDate, 'Y');
+				$intBegin = $objDate->yearBegin;
+				$intEnd = $objDate->yearEnd;
+				$this->headline .= ' ' . date('Y', $objDate->tstamp);
+			}
+			elseif ($intMonth)
+			{
+				$strDate = $intMonth;
+				$objDate = new \Date($strDate, 'Ym');
+				$intBegin = $objDate->monthBegin;
+				$intEnd = $objDate->monthEnd;
+				$this->headline .= ' ' . \Date::parse('F Y', $objDate->tstamp);
+			}
+			elseif ($intDay)
+			{
+				$strDate = $intDay;
+				$objDate = new \Date($strDate, 'Ymd');
+				$intBegin = $objDate->dayBegin;
+				$intEnd = $objDate->dayEnd;
+				$this->headline .= ' ' . \Date::parse($objPage->dateFormat, $objDate->tstamp);
+			}
+			elseif ($this->news_jumpToCurrent == 'all_items')
+			{
+				$intBegin = 0;
+				$intEnd = time();
+			}
 		}
-		// Display month
-		elseif (\Input::get('month'))
+		catch (\OutOfBoundsException $e)
 		{
-			$strDate = \Input::get('month');
-			$objDate = new \Date($strDate, 'Ym');
-			$intBegin = $objDate->monthBegin;
-			$intEnd = $objDate->monthEnd;
-			$this->headline .= ' ' . $this->parseDate('F Y', $objDate->tstamp);
-		}
-		// Display day
-		elseif (\Input::get('day'))
-		{
-			$strDate = \Input::get('day');
-			$objDate = new \Date($strDate, 'Ymd');
-			$intBegin = $objDate->dayBegin;
-			$intEnd = $objDate->dayEnd;
-			$this->headline .= ' ' . $this->parseDate($objPage->dateFormat, $objDate->tstamp);
-		}
-		// Show all items
-		elseif ($this->news_jumpToCurrent == 'all_items')
-		{
-			$intBegin = 0;
-			$intEnd = time();
+			/** @var \PageError404 $objHandler */
+			$objHandler = new $GLOBALS['TL_PTY']['error_404']();
+			#$objHandler->generate($objPage->id);
 		}
 
 		$this->Template->articles = array();
@@ -146,18 +128,14 @@ class ModuleNewsArchiveTags extends \ModuleNewsArchive
 
 				// Get the current page
 				$id = 'page_a' . $this->id;
-				$page = \Input::get($id) ?: 1;
+				$page = (\Input::get($id) !== null) ? \Input::get($id) : 1;
 
 				// Do not index or cache the page if the page number is outside the range
 				if ($page < 1 || $page > max(ceil($total/$this->perPage), 1))
 				{
-					global $objPage;
-					$objPage->noSearch = 1;
-					$objPage->cache = 0;
-
-					// Send a 404 header
-					header('HTTP/1.1 404 Not Found');
-					return;
+					/** @var \PageError404 $objHandler */
+					$objHandler = new $GLOBALS['TL_PTY']['error_404']();
+					$objHandler->generate($objPage->id);
 				}
 
 				// Set limit and offset
@@ -165,7 +143,7 @@ class ModuleNewsArchiveTags extends \ModuleNewsArchive
 				$offset = (max($page, 1) - 1) * $this->perPage;
 
 				// Add the pagination menu
-				$objPagination = new \Pagination($total, $this->perPage, 7, $id);
+				$objPagination = new \Pagination($total, $this->perPage, \Config::get('maxPaginationLinks'), $id);
 				$this->Template->pagination = $objPagination->generate("\n  ");
 			}
 		}
@@ -180,12 +158,8 @@ class ModuleNewsArchiveTags extends \ModuleNewsArchive
 			$objArticles = \TagsNewsModel::findPublishedFromToByPidsAndIds($intBegin, $intEnd, $this->news_archives, $arrIds);
 		}
 
-		// No items found
-		if ($objArticles === null)
-		{
-			$this->Template = new \FrontendTemplate('mod_newsarchive_empty');
-		}
-		else
+		// Add the articles
+		if ($objArticles !== null)
 		{
 			$this->Template->articles = $this->parseArticles($objArticles);
 		}
@@ -270,4 +244,3 @@ class ModuleNewsArchiveTags extends \ModuleNewsArchive
 	}
 }
 
-?>

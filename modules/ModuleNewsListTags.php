@@ -1,25 +1,15 @@
 <?php
 
-/**
- * @copyright  Helmut Schottmüller 2009
- * @author     Helmut Schottmüller <typolight@aurealis.de>
- * @package    News
- * @license    LGPL
- * @filesource
- */
-
 namespace Contao;
 
-if (!defined('TL_ROOT')) die('You can not access this file directly!');
-
 /**
- * Class ModuleNewsListTags
+ * Contao Open Source CMS - tags extension
  *
- * Front end module "news list".
- * @copyright  Helmut Schottmüller 2009
- * @author     Helmut Schottmüller <typolight@aurealis.de>
- * @package    Controller
+ * Copyright (c) 2008-2016 Helmut Schottmüller
+ *
+ * @license LGPL-3.0+
  */
+
 class ModuleNewsListTags extends \ModuleNewsList
 {
 	/**
@@ -61,9 +51,8 @@ class ModuleNewsListTags extends \ModuleNewsList
 	 */
 	protected function compileFromParent($arrIds)
 	{
-		$offset = intval($this->skipFirst);
 		$limit = null;
-		$this->Template->articles = array();
+		$offset = intval($this->skipFirst);
 
 		// Maximum number of items
 		if ($this->numberOfItems > 0)
@@ -85,12 +74,14 @@ class ModuleNewsListTags extends \ModuleNewsList
 			$blnFeatured = null;
 		}
 
+		$this->Template->articles = array();
+		$this->Template->empty = $GLOBALS['TL_LANG']['MSC']['emptyList'];
+
 		// Get the total number of items
 		$intTotal = \TagsNewsModel::countPublishedByPidsAndIds($this->news_archives, $arrIds, $blnFeatured);
 
 		if ($intTotal < 1)
 		{
-			$this->Template->articles = array();
 			return;
 		}
 
@@ -107,32 +98,32 @@ class ModuleNewsListTags extends \ModuleNewsList
 
 			// Get the current page
 			$id = 'page_n' . $this->id;
-			$page = \Input::get($id) ?: 1;
+			$page = (\Input::get($id) !== null) ? \Input::get($id) : 1;
 
 			// Do not index or cache the page if the page number is outside the range
 			if ($page < 1 || $page > max(ceil($total/$this->perPage), 1))
 			{
+				/** @var \PageModel $objPage */
 				global $objPage;
-				$objPage->noSearch = 1;
-				$objPage->cache = 0;
 
-				// Send a 404 header
-				header('HTTP/1.1 404 Not Found');
-				return;
+				/** @var \PageError404 $objHandler */
+				$objHandler = new $GLOBALS['TL_PTY']['error_404']();
+				$objHandler->generate($objPage->id);
 			}
 
 			// Set limit and offset
 			$limit = $this->perPage;
 			$offset += (max($page, 1) - 1) * $this->perPage;
+			$skip = intval($this->skipFirst);
 
 			// Overall limit
-			if ($offset + $limit > $total)
+			if ($offset + $limit > $total + $skip)
 			{
-				$limit = $total - $offset;
+				$limit = $total + $skip - $offset;
 			}
 
 			// Add the pagination menu
-			$objPagination = new \Pagination($total, $this->perPage, 7, $id);
+			$objPagination = new \Pagination($total, $this->perPage, \Config::get('maxPaginationLinks'), $id);
 			$this->Template->pagination = $objPagination->generate("\n  ");
 		}
 
@@ -146,16 +137,13 @@ class ModuleNewsListTags extends \ModuleNewsList
 			$objArticles = \TagsNewsModel::findPublishedByPidsAndIds($this->news_archives, $arrIds, $blnFeatured, 0, $offset);
 		}
 
-		// No items found
-		if ($objArticles === null)
-		{
-			$this->Template = new \FrontendTemplate('mod_newsarchive_empty');
-		}
-		else
+		// Add the articles
+		if ($objArticles !== null)
 		{
 			$this->Template->articles = $this->parseArticles($objArticles);
 		}
 
+		$this->Template->archives = $this->news_archives;
 		// new code for tags
 		$relatedlist = (strlen(\Input::get('related'))) ? preg_split("/,/", \Input::get('related')) : array();
 		$headlinetags = array();
@@ -234,4 +222,3 @@ class ModuleNewsListTags extends \ModuleNewsList
 	}
 }
 
-?>

@@ -1,42 +1,15 @@
 <?php
 
-/**
- * TYPOlight webCMS
- * Copyright (C) 2005 Leo Feyer
- *
- * This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation, either
- * version 2.1 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program. If not, please visit the Free
- * Software Foundation website at http://www.gnu.org/licenses/.
- *
- * PHP version 5
- * @copyright  Helmut Schottmüller 2008 
- * @author     Helmut Schottmüller <typolight@aurealis.de>
- * @package    tags 
- * @license    LGPL 
- * @filesource
- */
-
 namespace Contao;
 
-if (!defined('TL_ROOT')) die('You can not access this file directly!');
-
 /**
- * Class ModuleTagCloud
+ * Contao Open Source CMS - tags extension
  *
- * @copyright  Helmut Schottmüller 2008 
- * @author     Helmut Schottmüller <typolight@aurealis.de>
- * @package    Controller
+ * Copyright (c) 2008-2016 Helmut Schottmüller
+ *
+ * @license LGPL-3.0+
  */
+
 class ModuleTagCloud extends \Module
 {
 	/**
@@ -86,6 +59,7 @@ class ModuleTagCloud extends \Module
 		if (strlen($this->tag_tagtable)) $taglist->tagtable = $this->tag_tagtable;
 		if (strlen($this->tag_tagfield)) $taglist->tagfield = $this->tag_tagfield;
 		if (strlen($this->tag_sourcetables)) $taglist->fortable = deserialize($this->tag_sourcetables, TRUE);
+		if (strlen($this->tag_topten_number) && $this->tag_topten_number > 0) $taglist->topnumber = $this->tag_topten_number;
 		if (strlen($this->tag_maxtags)) $taglist->maxtags = $this->tag_maxtags;
 		if (strlen($this->tag_buckets) && $this->tag_buckets > 0) $taglist->buckets = $this->tag_buckets;
 		if (strlen($this->pagesource)) $taglist->pagesource = deserialize($this->pagesource, TRUE);
@@ -109,7 +83,6 @@ class ModuleTagCloud extends \Module
 	 */
 	protected function compile()
 	{
-		$this->import('String');
 		$this->showTags();
 	}
 
@@ -201,7 +174,7 @@ class ModuleTagCloud extends \Module
 		$this->Template->relatedtags = $this->arrRelated;
 		$this->Template->strRelatedTags = $GLOBALS['TL_LANG']['tl_module']['tag_relatedtags'];
 		$this->Template->strAllTags = $GLOBALS['TL_LANG']['tl_module']['tag_alltags'];
-		$this->Template->strTopTenTags = $GLOBALS['TL_LANG']['tl_module']['tag_topten'][0];
+		$this->Template->strTopTenTags = sprintf($GLOBALS['TL_LANG']['tl_module']['top_tags'], $this->tag_topten_number);
 		$this->Template->tagcount = count($this->arrTags);
 		$this->Template->selectedtags = (strlen(\Input::get('tag'))) ? (count($this->arrRelated)+1) : 0;
 		if ($this->tag_show_reset)
@@ -299,4 +272,3 @@ class ModuleTagCloud extends \Module
 	}
 }
 
-?>

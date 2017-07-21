@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * Contao Open Source CMS - tags extension
+ *
+ * Copyright (c) 2008-2016 Helmut Schottmüller
+ *
+ * @license LGPL-3.0+
+ */
+
 $disabledObjects = deserialize($GLOBALS['TL_CONFIG']['disabledTagObjects'], true);
 if (!in_array('tl_content', $disabledObjects))
 {
@@ -40,8 +48,8 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['tag_filter'] = array
 (
 	'label'                   => &$GLOBALS['TL_LANG']['tl_content']['tag_filter'],
 	'inputType'               => 'text',
-	'eval'                    => array('maxlength'=>255, 'tl_class' => 'w50'),
-	'sql'                     => "varchar(255) NOT NULL default ''"
+	'eval'                    => array('maxlength'=>1000, 'tl_class' => 'w50'),
+	'sql'                     => "varchar(1000) NOT NULL default ''"
 );
 
 $GLOBALS['TL_DCA']['tl_content']['fields']['tag_ignore'] = array
