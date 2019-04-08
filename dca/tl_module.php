@@ -29,7 +29,7 @@ class tl_module_tags extends tl_module
 		}
 		return $tables;
 	}
-	
+
 	public function getObjectTypes()
 	{
 		return array(
@@ -38,7 +38,7 @@ class tl_module_tags extends tl_module
 			'tl_page' => $GLOBALS['TL_LANG']['tl_module']['tl_page']
 		);
 	}
-	
+
 	public function getContentObjectTagTables()
 	{
 		return array(
@@ -79,6 +79,99 @@ class tl_module_tags extends tl_module
 	}
 }
 
+class tl_module_tags_articles extends tl_module
+{
+	public function getArticlelistTemplates(DataContainer $dc)
+	{
+		if (version_compare(VERSION.BUILD, '2.9.0', '>='))
+		{
+			return $this->getTemplateGroup('mod_', $dc->activeRecord->pid);
+		}
+		else
+		{
+			return $this->getTemplateGroup('mod_');
+		}
+	}
+
+	public function getArticlelistOrder(DataContainer $dc)
+	{
+		$this->loadLanguageFile('tl_article');
+		return array(
+			'' => '-',
+			'tstamp ASC' => $GLOBALS['TL_LANG']['tl_article']['tstamp'][0] . ' (' . $GLOBALS['TL_LANG']['MSC']['ascending'] . ')',
+			'tstamp DESC' => $GLOBALS['TL_LANG']['tl_article']['tstamp'][0] . ' (' . $GLOBALS['TL_LANG']['MSC']['descending'] . ')',
+			'title ASC' => $GLOBALS['TL_LANG']['tl_article']['title'][0] . ' (' . $GLOBALS['TL_LANG']['MSC']['ascending'] . ')',
+			'title DESC' => $GLOBALS['TL_LANG']['tl_article']['title'][0] . ' (' . $GLOBALS['TL_LANG']['MSC']['descending'] . ')',
+			'start ASC' => $GLOBALS['TL_LANG']['tl_article']['start'][0] . ' (' . $GLOBALS['TL_LANG']['MSC']['ascending'] . ')',
+			'start DESC' => $GLOBALS['TL_LANG']['tl_article']['start'][0] . ' (' . $GLOBALS['TL_LANG']['MSC']['descending'] . ')',
+			'stop ASC' => $GLOBALS['TL_LANG']['tl_article']['stop'][0] . ' (' . $GLOBALS['TL_LANG']['MSC']['ascending'] . ')',
+			'stop DESC' => $GLOBALS['TL_LANG']['tl_article']['stop'][0] . ' (' . $GLOBALS['TL_LANG']['MSC']['descending'] . ')'
+		);
+	}
+}
+
+/**
+ * Class tl_module_tags_events
+ *
+ * Provide miscellaneous methods that are used by the data configuration array.
+ * @copyright  Helmut Schottmüller 2008-2013
+ * @author     Helmut Schottmüller <https://github.com/hschottm>
+ * @package    Controller
+ */
+class tl_module_tags_events extends tl_module
+{
+	/**
+	 * Return available calendars
+	 *
+	 * @return array Array of calendars
+	 */
+	public function getCalendars()
+	{
+		$objTable = $this->Database->prepare("SELECT id, title FROM tl_calendar ORDER BY title")
+			->execute();
+		$tables = array();
+		if ($objTable->numRows)
+		{
+			while ($objTable->next())
+			{
+				$tables[$objTable->id] = $objTable->title;
+			}
+		}
+		return $tables;
+	}
+}
+
+/**
+ * Class tl_module_tags_news
+ *
+ * Provide miscellaneous methods that are used by the data configuration array.
+ * @copyright  Helmut Schottmüller 2008-2013
+ * @author     Helmut Schottmüller <https://github.com/hschottm>
+ * @package    Controller
+ */
+class tl_module_tags_news extends tl_module
+{
+	/**
+	 * Return available news archives
+	 *
+	 * @return array Array of news archives
+	 */
+	public function getNewsArchives()
+	{
+		$objTable = $this->Database->prepare("SELECT id, title FROM tl_news_archive ORDER BY title")
+			->execute();
+		$tables = array();
+		if ($objTable->numRows)
+		{
+			while ($objTable->next())
+			{
+				$tables[$objTable->id] = $objTable->title;
+			}
+		}
+		return $tables;
+	}
+}
+
 /**
  * Add palettes to tl_module
  */
@@ -100,9 +193,60 @@ $GLOBALS['TL_DCA']['tl_module']['subpalettes']['tag_topten']    = 'tag_topten_nu
 $GLOBALS['TL_DCA']['tl_module']['subpalettes']['news_showtags']    = 'tag_jumpTo,tag_named_class';
 $GLOBALS['TL_DCA']['tl_module']['subpalettes']['event_showtags']    = 'tag_jumpTo,tag_named_class';
 
+// articles
+
+$GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][]      = 'show_in_column';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][]      = 'restrict_to_column';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'article_showtags';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['tagcloudarticles']    = '{title_legend},name,headline,type;{size_legend},tag_maxtags,tag_buckets,tag_named_class,tag_on_page_class,tag_show_reset;{template_legend:hide},cloud_template;{tagextension_legend},tag_related,tag_topten;{redirect_legend},tag_jumpTo,keep_url_params;{datasource_legend},tag_articles,restrict_to_column;{expert_legend:hide},cssID';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['taggedArticleList']   = '{title_legend},name,headline,type;{config_legend},show_in_column;{showtags_legend},article_showtags,hide_on_empty;{template_legend},articlelist_tpl,linktoarticles,articlelist_firstorder,articlelist_secondorder;{datasource_legend},tag_articles;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['subpalettes']['show_in_column']    = 'inColumn';
+$GLOBALS['TL_DCA']['tl_module']['subpalettes']['restrict_to_column']    = 'inColumn';
+$GLOBALS['TL_DCA']['tl_module']['subpalettes']['article_showtags']    = 'tag_jumpTo';
+
+//content
+
+$GLOBALS['TL_DCA']['tl_module']['palettes']['tagcloudcontent']    = '{title_legend},name,headline,type;{size_legend},tag_maxtags,tag_buckets,tag_named_class,tag_on_page_class,tag_show_reset;{template_legend:hide},cloud_template;{tagextension_legend},tag_related,tag_topten;{redirect_legend},tag_jumpTo,keep_url_params;{datasource_legend},tag_content_pages;{expert_legend:hide},cssID';
+
+// events
+
+$GLOBALS['TL_DCA']['tl_module']['palettes']['tagcloudevents']    = '{title_legend},name,headline,type;{size_legend},tag_maxtags,tag_buckets,tag_named_class,tag_show_reset;{template_legend:hide},cloud_template;{tagextension_legend},tag_related,tag_topten;{redirect_legend},tag_jumpTo,keep_url_params;{datasource_legend},tag_calendars;{expert_legend:hide},cssID';
+
+// members
+
+$GLOBALS['TL_DCA']['tl_module']['palettes']['tagcloudmembers']    = '{title_legend},name,headline,type;{size_legend},tag_maxtags,tag_buckets,tag_named_class,tag_show_reset;{template_legend:hide},cloud_template;{tagextension_legend},tag_related,tag_topten;{redirect_legend},tag_jumpTo,keep_url_params;{datasource_legend},tag_membergroups;{expert_legend:hide},cssID';
+
+// news
+
+$GLOBALS['TL_DCA']['tl_module']['palettes']['tagcloudnews']    = '{title_legend},name,headline,type;{size_legend},tag_maxtags,tag_buckets,tag_named_class,tag_show_reset;{template_legend:hide},cloud_template;{tagextension_legend},tag_related,tag_topten;{redirect_legend},tag_jumpTo,keep_url_params;{datasource_legend},tag_news_archives;{expert_legend:hide},cssID';
+
 /**
  * Add fields to tl_module
  */
+
+ $GLOBALS['TL_DCA']['tl_module']['fields']['tag_filter'] = array
+ (
+ 	'label'                   => &$GLOBALS['TL_LANG']['tl_module']['tag_filter'],
+ 	'inputType'               => 'text',
+ 	'eval'                    => array('maxlength'=>1000, 'tl_class' => 'w50'),
+ 	'sql'                     => "varchar(1000) NOT NULL default ''"
+ );
+
+ $GLOBALS['TL_DCA']['tl_module']['fields']['tag_ignore'] = array
+ (
+ 	'label'                   => &$GLOBALS['TL_LANG']['tl_module']['tag_ignore'],
+ 	'inputType'               => 'checkbox',
+ 	'eval'                    => array('tl_class' => 'w50 m12'),
+ 	'sql'                     => "char(1) NOT NULL default ''"
+ );
+
+ $GLOBALS['TL_DCA']['tl_module']['fields']['news_showtags'] = array
+ (
+ 	'label'                   => &$GLOBALS['TL_LANG']['tl_module']['news_showtags'],
+ 	'inputType'               => 'checkbox',
+ 	'eval'                    => array('submitOnChange'=>true, 'tl_class' => 'clr'),
+ 	'sql'                     => "char(1) NOT NULL default ''"
+ );
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['tag_sourcetables'] = array
 (
@@ -128,14 +272,6 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['tag_tagtable'] = array
 	'inputType'               => 'text',
 	'eval'                    => array('maxlength'=>100),
 	'sql'                     => "varchar(100) NOT NULL default ''"
-);
-
-$GLOBALS['TL_DCA']['tl_module']['fields']['tag_filter'] = array
-(
-	'label'                   => &$GLOBALS['TL_LANG']['tl_module']['tag_filter'],
-	'inputType'               => 'text',
-	'eval'                    => array('maxlength'=>1000, 'tl_class' => 'w50'),
-	'sql'                     => "varchar(1000) NOT NULL default ''"
 );
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['tag_tagfield'] = array
@@ -228,14 +364,6 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['tag_all_expanded'] = array
 	'sql'                     => "char(1) NOT NULL default ''"
 );
 
-$GLOBALS['TL_DCA']['tl_module']['fields']['news_showtags'] = array
-(
-	'label'                   => &$GLOBALS['TL_LANG']['tl_module']['news_showtags'],
-	'inputType'               => 'checkbox',
-	'eval'                    => array('submitOnChange'=>true),
-	'sql'                     => "char(1) NOT NULL default ''"
-);
-
 $GLOBALS['TL_DCA']['tl_module']['fields']['event_showtags'] = array
 (
 	'label'                   => &$GLOBALS['TL_LANG']['tl_module']['event_showtags'],
@@ -251,14 +379,6 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['tag_jumpTo'] = array
 	'explanation'             => 'jumpTo',
 	'eval'                    => array('fieldType'=>'radio', 'helpwizard'=>true),
 	'sql'                     => "smallint(5) unsigned NOT NULL default '0'"
-);
-
-$GLOBALS['TL_DCA']['tl_module']['fields']['tag_ignore'] = array
-(
-	'label'                   => &$GLOBALS['TL_LANG']['tl_module']['tag_ignore'],
-	'inputType'               => 'checkbox',
-	'eval'                    => array('tl_class' => 'w50'),
-	'sql'                     => "char(1) NOT NULL default ''"
 );
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['objecttype'] = array
@@ -347,3 +467,123 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['tag_show_reset'] = array
 	'sql'                     => "char(1) NOT NULL default ''"
 );
 
+// articles
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['tag_articles'] = array
+(
+	'label'                   => &$GLOBALS['TL_LANG']['tl_module']['tag_articles'],
+	'inputType'               => 'pageTree',
+	'eval'                    => array('fieldType'=>'radio', 'helpwizard'=>false, 'mandatory' => true),
+	'sql'                     => "blob NULL"
+);
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['show_in_column'] = array
+(
+	'label'                   => &$GLOBALS['TL_LANG']['tl_module']['show_in_column'],
+	'exclude'                 => true,
+	'inputType'               => 'checkbox',
+	'eval'                    => array('submitOnChange'=>true),
+	'sql'                     => "char(1) NOT NULL default '0'"
+);
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['restrict_to_column'] = array
+(
+	'label'                   => &$GLOBALS['TL_LANG']['tl_module']['restrict_to_column'],
+	'exclude'                 => true,
+	'inputType'               => 'checkbox',
+	'eval'                    => array('submitOnChange'=>true),
+	'sql'                     => "char(1) NOT NULL default '0'"
+);
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['linktoarticles'] = array
+(
+	'label'                   => &$GLOBALS['TL_LANG']['tl_module']['linktoarticles'],
+	'exclude'                 => true,
+	'inputType'               => 'checkbox',
+	'eval'                    => array('tl_class' => 'w50 m12'),
+	'sql'                     => "char(1) NOT NULL default '1'"
+);
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['articlelist_tpl'] = array
+(
+	'label'                   => &$GLOBALS['TL_LANG']['tl_module']['articlelist_tpl'],
+	'default'                 => 'mod_global_articlelist',
+	'exclude'                 => true,
+	'inputType'               => 'select',
+	'options_callback'        => array('tl_module_tags_articles', 'getArticlelistTemplates'),
+	'eval'                    => array('tl_class' => 'w50'),
+	'sql'                     => "varchar(64) NOT NULL default 'mod_global_articlelist'"
+);
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['articlelist_firstorder'] = array
+(
+	'label'                   => &$GLOBALS['TL_LANG']['tl_module']['articlelist_firstorder'],
+	'default'                 => 'title ASC',
+	'exclude'                 => true,
+	'inputType'               => 'select',
+	'options_callback'        => array('tl_module_tags_articles', 'getArticlelistOrder'),
+	'eval'                    => array('tl_class' => 'w50'),
+	'sql'                     => "varchar(64) NOT NULL default 'title ASC'"
+);
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['articlelist_secondorder'] = array
+(
+	'label'                   => &$GLOBALS['TL_LANG']['tl_module']['articlelist_secondorder'],
+	'default'                 => '',
+	'exclude'                 => true,
+	'inputType'               => 'select',
+	'options_callback'        => array('tl_module_tags_articles', 'getArticlelistOrder'),
+	'eval'                    => array('tl_class' => 'w50'),
+	'sql'                     => "varchar(64) NOT NULL default ''"
+);
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['article_showtags'] = array
+(
+	'label'                   => &$GLOBALS['TL_LANG']['tl_module']['article_showtags'],
+	'inputType'               => 'checkbox',
+	'eval'                    => array('submitOnChange'=>true),
+	'sql'                     => "char(1) NOT NULL default ''"
+);
+
+// content
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['tag_content_pages'] = array
+(
+	'label'                   => &$GLOBALS['TL_LANG']['tl_module']['tag_content_pages'],
+	'inputType'               => 'pageTree',
+	'eval'                    => array('fieldType'=>'radio', 'helpwizard'=>false, 'mandatory' => true),
+	'sql'                     => "blob NULL"
+);
+
+// events
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['tag_calendars'] = array
+(
+	'label'                   => &$GLOBALS['TL_LANG']['tl_module']['tag_calendars'],
+	'inputType'               => 'checkbox',
+	'options_callback'        => array('tl_module_tags_events', 'getCalendars'),
+	'eval'                    => array('multiple'=>true),
+	'sql'                     => "blob NULL"
+);
+
+// members
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['tag_membergroups'] = array
+(
+	'label'                   => &$GLOBALS['TL_LANG']['tl_module']['tag_membergroups'],
+	'inputType'               => 'checkbox',
+	'foreignKey'              => 'tl_member_group.name',
+	'eval'                    => array('multiple'=>true),
+	'sql'                     => "blob NULL"
+);
+
+// news
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['tag_news_archives'] = array
+(
+	'label'                   => &$GLOBALS['TL_LANG']['tl_module']['tag_news_archives'],
+	'inputType'               => 'checkbox',
+	'options_callback'        => array('tl_module_tags_news', 'getNewsArchives'),
+	'eval'                    => array('multiple'=>true),
+	'sql'                     => "blob NULL"
+);
