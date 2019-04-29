@@ -92,7 +92,7 @@ class ModuleTagCloud extends \Module
 	protected function showTags()
 	{
 		$this->loadLanguageFile('tl_module');
-		$strUrl = ampersand(\Environment::get('request'), ENCODE_AMPERSANDS);
+		$strUrl = \Environment::get('request');
 		// Get target page
 		$objPageObject = $this->Database->prepare("SELECT id, alias FROM tl_page WHERE id=?")
 			->limit(1)
@@ -164,7 +164,7 @@ class ModuleTagCloud extends \Module
 		{
 			if (count($pageArr))
 			{
-				$strUrl = ampersand($this->generateFrontendUrl($pageArr, '/tag/' . \System::urlencode(\Input::get('tag')) . '/related/' . \System::urlencode(join(array_merge($relatedlist, array($tag['tag_name'])), ','))));
+				$strUrl = urldecode($this->generateFrontendUrl($pageArr, '/tag/' . \System::urlencode(\Input::get('tag')) . '/related/' . \System::urlencode(join(array_merge($relatedlist, array($tag['tag_name'])), ','))));
 			}
 			$this->arrRelated[$idx]['tag_url'] = $strUrl;
 		}
@@ -179,7 +179,7 @@ class ModuleTagCloud extends \Module
 		$this->Template->selectedtags = (strlen(\Input::get('tag'))) ? (count($this->arrRelated)+1) : 0;
 		if ($this->tag_show_reset)
 		{
-			$strEmptyUrl = ampersand($this->generateFrontendUrl($pageArr, ''));
+			$strEmptyUrl = urldecode($this->generateFrontendUrl($pageArr, ''));
 			if (strlen($strParams))
 			{
 				if (strpos($strUrl, '?') !== false)
@@ -204,7 +204,7 @@ class ModuleTagCloud extends \Module
 				{
 					if (count($pageArr))
 					{
-						$strUrl = ampersand($this->generateFrontendUrl($pageArr, '/tag/' . \System::urlencode($tag['tag_name'])));
+						$strUrl = urldecode($this->generateFrontendUrl($pageArr, '/tag/' . \System::urlencode($tag['tag_name'])));
 						if (strlen($strParams))
 						{
 							if (strpos($strUrl, '?') !== false)
