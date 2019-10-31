@@ -1,4 +1,4 @@
-Contao tags extension
+[DEPRECATED & UNSUPPORTED] Contao tags extension
 =====================
 
 # tags extension
