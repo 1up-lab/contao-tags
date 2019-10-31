@@ -1,4 +1,4 @@
-[DEPRECATED & UNSUPPORTED] Contao tags extension
+[MIRRORED & UNSUPPORTED] Contao tags extension
 =====================
 
 # tags extension
